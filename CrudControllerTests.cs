@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using MongoRest.Converters;
 
 namespace MongoRest.Units;
@@ -11,7 +12,11 @@ public class CrudControllerTests
 {
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
+    private IMongoClient _mongoClient;
+    private IMongoDatabase _database;
 
+    private const string ConnectionString = "mongodb://localhost:27017";
+    private const string TestCollectionName = "Tests";
     private const string DocumentId = "6741b5d0f12b1561701b9688";
 
     [SetUp]
@@ -19,13 +24,19 @@ public class CrudControllerTests
     {
         _factory = new WebApplicationFactory<Program>();
         _client = _factory.CreateClient();
+
+        _mongoClient = new MongoClient(ConnectionString);
+        _database = _mongoClient.GetDatabase(TestCollectionName);
     }
 
     [TearDown]
     public void TearDown()
     {
+        _database.DropCollection(TestCollectionName);
+
         _client.Dispose();
         _factory.Dispose();
+        _mongoClient.Dispose();
     }
 
     [Test, Order(0)]
@@ -48,10 +59,10 @@ public class CrudControllerTests
         });
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
-       
+
         var response = await _client.PostAsync(url, content);
         response.EnsureSuccessStatusCode();
-        
+
         var responseString = await response.Content.ReadAsStringAsync();
         Assert.That(responseString, Does.Contain("Document created successfully."));
     }
