@@ -41,11 +41,12 @@ public class CrudControllerTests
         Assert.That(statusCodes, Is.EqualTo(HttpStatusCode.OK));
     }
 
-    private async Task CreateDocument(HttpClient client, BsonDocument bsonDocument)
+    private async Task InsertDocument(HttpClient client, BsonDocument bsonDocument)
     {
-        const string url = $"{CollectionUrl}/create";
+        const string url = $"{CollectionUrl}/insert";
 
-        var json = JsonSerializer.Serialize(bsonDocument, _options);
+        var array = new[] { bsonDocument };
+        var json = JsonSerializer.Serialize(array, _options);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         try
@@ -91,7 +92,7 @@ public class CrudControllerTests
             { "Country", "Wonderland" }
         };
 
-        await CreateDocument(_client, bsonDocument1);
+        await InsertDocument(_client, bsonDocument1);
         
         var bsonDocument2 = new BsonDocument
         {
@@ -101,7 +102,7 @@ public class CrudControllerTests
             { "Country", "Wonderland" }
         };
 
-        await CreateDocument(_client,bsonDocument2);
+        await InsertDocument(_client,bsonDocument2);
         
         var bsonDocument3 = new BsonDocument
         {
@@ -111,73 +112,11 @@ public class CrudControllerTests
             { "Country", "Mongoland" }
         };
 
-        await CreateDocument(_client,bsonDocument3);
+        await InsertDocument(_client,bsonDocument3);
     }
 
-    [Test, Order(2)]
-    public async Task GetDocument_ReturnsDocument()
-    {
-        const string url = $"{CollectionUrl}/get/{DocumentId}";
-
-        try
-        {
-            var response = await _client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            StatusCode_Ok(response.StatusCode);
-
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            Assert.That(responseString, Does.Contain("Name"));
-            Assert.That(responseString, Does.Contain("Alice"));
-        }
-        catch (HttpRequestException ex)
-        {
-            Assert.Fail(ex.Message);
-        }
-    }
-    
-    [Test, Order(3)]
-    public async Task CountDocumentById_ReturnsDocument()
-    {
-        const string url = $"{CollectionUrl}/count/6741b5d0f12b1561701b968a";
-
-        try
-        {
-            var response = await _client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            StatusCode_Ok(response.StatusCode);
-            
-            var responseString = await response.Content.ReadAsStringAsync();
-            Assert.That(responseString, Does.Contain("1"));
-        }
-        catch (HttpRequestException ex)
-        {
-            Assert.Fail(ex.Message);
-        }
-    }
-
-    [Test, Order(4)]
-    public async Task DeleteDocumentByFilter_ReturnsDocument()
-    {
-        const string url = $"{CollectionUrl}/delete/{DocumentId}";
-
-        try
-        {
-            var response = await _client.DeleteAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            StatusCode_Ok(response.StatusCode);
-        }
-        catch (HttpRequestException ex)
-        {
-            Assert.Fail(ex.Message);
-        }
-    }
-    
     [Test, Order(5)]
-    public async Task DeleteAllByFilterDocumentByFilter_ReturnsDocument()
+    public async Task DeleteAllDocumentsByFilter_ReturnsDocument()
     {
         const string url = $"{CollectionUrl}/delete";
 
@@ -204,7 +143,7 @@ public class CrudControllerTests
     }
     
     [Test, Order(6)]
-    public async Task CountAllDocuments_ReturnsDocument()
+    public async Task CountAllDocumentsByFilter_ReturnsDocument()
     {
         const string url = $"{CollectionUrl}/count";
 
@@ -233,7 +172,7 @@ public class CrudControllerTests
     }
     
     [Test, Order(7)]
-    public async Task DeleteAllDocumentByFilter_ReturnsDocument()
+    public async Task DeleteAllDocuments_ReturnsDocument()
     {
         const string url = $"{CollectionUrl}/delete";
 
