@@ -93,7 +93,7 @@ public class CrudControllerTests
     [Test, Order(2)]
     public async Task GetDocument_ReturnsDocument()
     {
-        const string url = $"{CollectionUrl}/get?id={DocumentId}";
+        const string url = $"{CollectionUrl}/get/{DocumentId}";
 
         try
         {
