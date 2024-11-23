@@ -17,6 +17,11 @@ public class CrudControllerTests
     private const string DocumentId = "6741b5d0f12b1561701b9688";
     private const string CollectionUrl = $"{Constants.APIRootPath}/collections/{TestCollectionName}";
 
+    private readonly JsonSerializerOptions _options = new()
+    {
+        Converters = { new BsonDocumentJsonConverter() }
+    };
+
     [SetUp]
     public void SetUp()
     {
@@ -68,10 +73,7 @@ public class CrudControllerTests
             { "Country", "Wonderland" }
         };
 
-        var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
-        {
-            Converters = { new BsonDocumentJsonConverter() }
-        });
+        var json = JsonSerializer.Serialize(bsonDocument, _options);
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -124,11 +126,7 @@ public class CrudControllerTests
                 { "Country", "Wonderland" }
             };
 
-            var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
-            {
-                Converters = { new BsonDocumentJsonConverter() }
-            });
-
+            var json = JsonSerializer.Serialize(bsonDocument, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _client.PostAsync(url, content);
