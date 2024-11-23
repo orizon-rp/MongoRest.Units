@@ -16,7 +16,7 @@ public class CrudControllerTests
     private IMongoDatabase _database;
 
     private const string ConnectionString = "mongodb://localhost:27017";
-    private const string TestCollectionName = "Tests";
+    private const string TestCollectionName = "tests";
     private const string DocumentId = "6741b5d0f12b1561701b9688";
 
     [SetUp]
@@ -42,8 +42,7 @@ public class CrudControllerTests
     [Test, Order(0)]
     public async Task CreateDocument_ReturnsSuccess()
     {
-        const string collectionName = "users";
-        const string url = $"{Constants.APIRootPath}/collections/{collectionName}/create";
+        const string url = $"{Constants.APIRootPath}/collections/{TestCollectionName}/create";
 
         var bsonDocument = new BsonDocument
         {
@@ -70,8 +69,7 @@ public class CrudControllerTests
     [Test, Order(1)]
     public async Task GetDocument_ReturnsDocument()
     {
-        const string collectionName = "users";
-        const string url = $"{Constants.APIRootPath}/collections/{collectionName}/get/{DocumentId}";
+        const string url = $"{Constants.APIRootPath}/collections/{TestCollectionName}/get/{DocumentId}";
 
         var response = await _client.GetAsync(url);
         response.EnsureSuccessStatusCode();
