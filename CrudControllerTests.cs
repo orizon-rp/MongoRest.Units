@@ -12,6 +12,8 @@ public class CrudControllerTests
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
 
+    private const string DocumentId = "6741b5d0f12b1561701b9688";
+
     [SetUp]
     public void SetUp()
     {
@@ -26,7 +28,7 @@ public class CrudControllerTests
         _factory.Dispose();
     }
 
-    [Test]
+    [Test, Order(0)]
     public async Task CreateDocument_ReturnsSuccess()
     {
         const string collectionName = "users";
@@ -34,6 +36,7 @@ public class CrudControllerTests
 
         var bsonDocument = new BsonDocument
         {
+            { "_id", DocumentId },
             { "Name", "Alice" },
             { "Age", 28 },
             { "Country", "Wonderland" }
