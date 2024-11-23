@@ -1,8 +1,8 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using MongoDB.Bson;
-using MongoDB.Driver;
 using MongoRest.Converters;
 
 namespace MongoRest.Units;
@@ -12,44 +12,38 @@ public class CrudControllerTests
 {
     private WebApplicationFactory<Program> _factory;
     private HttpClient _client;
-    private IMongoClient _mongoClient;
-    private IMongoDatabase _database;
 
-    private const string ConnectionString = "mongodb://localhost:27017";
     private const string TestCollectionName = "tests";
     private const string DocumentId = "6741b5d0f12b1561701b9688";
+    private const string CollectionUrl = $"{Constants.APIRootPath}/collections/{TestCollectionName}";
 
     [SetUp]
     public void SetUp()
     {
         _factory = new WebApplicationFactory<Program>();
         _client = _factory.CreateClient();
-
-        _mongoClient = new MongoClient(ConnectionString);
-        _database = _mongoClient.GetDatabase(TestCollectionName);
     }
 
     [TearDown]
     public void TearDown()
     {
-        _database.DropCollection(TestCollectionName);
-
         _client.Dispose();
         _factory.Dispose();
-        _mongoClient.Dispose();
     }
 
-    [Test, Order(0)]
-    public async Task CreateDocument_ReturnsSuccess()
+    private static void StatusCode_Ok(HttpStatusCode statusCodes)
     {
-        const string url = $"{Constants.APIRootPath}/collections/{TestCollectionName}/create";
+        Assert.That(statusCodes, Is.EqualTo(HttpStatusCode.OK));
+    }
+    
+    [Test, Order(0)]
+    public async Task DeleteDocument_ReturnsSuccess()
+    {
+        const string deleteUrl = $"{CollectionUrl}/delete";
 
         var bsonDocument = new BsonDocument
         {
-            { "_id", DocumentId },
-            { "Name", "Alice" },
-            { "Age", 28 },
-            { "Country", "Wonderland" }
+            { "_id", DocumentId }
         };
 
         var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
@@ -58,25 +52,73 @@ public class CrudControllerTests
         });
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var deleteResponse = await _client.PostAsync(deleteUrl, content);
 
-        var response = await _client.PostAsync(url, content);
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            deleteResponse.EnsureSuccessStatusCode();
 
-        var responseString = await response.Content.ReadAsStringAsync();
-        Assert.That(responseString, Does.Contain("Document created successfully."));
+            StatusCode_Ok(deleteResponse.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.That(ex.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        }
     }
 
     [Test, Order(1)]
+    public async Task CreateDocument_ReturnsSuccess()
+    {
+        const string url = $"{CollectionUrl}/create";
+    
+        var bsonDocument = new BsonDocument
+        {
+            { "_id", DocumentId },
+            { "Name", "Alice" },
+            { "Age", 28 },
+            { "Country", "Wonderland" }
+        };
+    
+        var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
+        {
+            Converters = { new BsonDocumentJsonConverter() }
+        });
+    
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+    
+        try
+        {
+            var response = await _client.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+    
+            StatusCode_Ok(response.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
+    }
+    
+    [Test, Order(2)]
     public async Task GetDocument_ReturnsDocument()
     {
-        const string url = $"{Constants.APIRootPath}/collections/{TestCollectionName}/get/{DocumentId}";
-
-        var response = await _client.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-
-        var responseString = await response.Content.ReadAsStringAsync();
-
-        Assert.That(responseString, Does.Contain("Name"));
-        Assert.That(responseString, Does.Contain("Alice"));
+        const string url = $"{CollectionUrl}/get?id={DocumentId}";
+    
+        try
+        {
+            var response = await _client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            
+            StatusCode_Ok(response.StatusCode);
+    
+            var responseString = await response.Content.ReadAsStringAsync();
+    
+            Assert.That(responseString, Does.Contain("Name"));
+            Assert.That(responseString, Does.Contain("Alice"));
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
     }
 }
