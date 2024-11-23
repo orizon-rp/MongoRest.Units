@@ -48,10 +48,26 @@ public class CrudControllerTests
         });
 
         var content = new StringContent(json, Encoding.UTF8, "application/json");
+       
         var response = await _client.PostAsync(url, content);
-
         response.EnsureSuccessStatusCode();
+        
         var responseString = await response.Content.ReadAsStringAsync();
         Assert.That(responseString, Does.Contain("Document created successfully."));
+    }
+
+    [Test, Order(1)]
+    public async Task GetDocument_ReturnsDocument()
+    {
+        const string collectionName = "users";
+        const string url = $"{Constants.APIRootPath}/collections/{collectionName}/get/{DocumentId}";
+
+        var response = await _client.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        Assert.That(responseString, Does.Contain("Name"));
+        Assert.That(responseString, Does.Contain("Alice"));
     }
 }
