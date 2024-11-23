@@ -35,9 +35,9 @@ public class CrudControllerTests
     {
         Assert.That(statusCodes, Is.EqualTo(HttpStatusCode.OK));
     }
-    
+
     [Test, Order(0)]
-    public async Task DeleteDocument_ReturnsSuccess()
+    public async Task DeleteDocumentById_ReturnsSuccess()
     {
         const string deleteUrl = $"{CollectionUrl}/delete/{DocumentId}";
 
@@ -59,7 +59,7 @@ public class CrudControllerTests
     public async Task CreateDocument_ReturnsSuccess()
     {
         const string url = $"{CollectionUrl}/create";
-    
+
         var bsonDocument = new BsonDocument
         {
             { "_id", DocumentId },
@@ -67,19 +67,19 @@ public class CrudControllerTests
             { "Age", 28 },
             { "Country", "Wonderland" }
         };
-    
+
         var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
         {
             Converters = { new BsonDocumentJsonConverter() }
         });
-    
+
         var content = new StringContent(json, Encoding.UTF8, "application/json");
-    
+
         try
         {
             var response = await _client.PostAsync(url, content);
             response.EnsureSuccessStatusCode();
-    
+
             StatusCode_Ok(response.StatusCode);
         }
         catch (HttpRequestException ex)
@@ -87,23 +87,54 @@ public class CrudControllerTests
             Assert.Fail(ex.Message);
         }
     }
-    
+
     [Test, Order(2)]
     public async Task GetDocument_ReturnsDocument()
     {
         const string url = $"{CollectionUrl}/get?id={DocumentId}";
-    
+
         try
         {
             var response = await _client.GetAsync(url);
             response.EnsureSuccessStatusCode();
-            
+
             StatusCode_Ok(response.StatusCode);
-    
+
             var responseString = await response.Content.ReadAsStringAsync();
-    
+
             Assert.That(responseString, Does.Contain("Name"));
             Assert.That(responseString, Does.Contain("Alice"));
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
+    }
+
+    [Test, Order(3)]
+    public async Task DeleteDocumentByFilter_ReturnsDocument()
+    {
+        const string url = $"{CollectionUrl}/delete";
+
+        try
+        {
+            var bsonDocument = new BsonDocument
+            {
+                { "Name", "Alice" },
+                { "Country", "Wonderland" }
+            };
+
+            var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
+            {
+                Converters = { new BsonDocumentJsonConverter() }
+            });
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+
+            StatusCode_Ok(response.StatusCode);
         }
         catch (HttpRequestException ex)
         {
