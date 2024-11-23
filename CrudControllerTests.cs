@@ -39,20 +39,9 @@ public class CrudControllerTests
     [Test, Order(0)]
     public async Task DeleteDocument_ReturnsSuccess()
     {
-        const string deleteUrl = $"{CollectionUrl}/delete";
+        const string deleteUrl = $"{CollectionUrl}/delete/{DocumentId}";
 
-        var bsonDocument = new BsonDocument
-        {
-            { "_id", DocumentId }
-        };
-
-        var json = JsonSerializer.Serialize(bsonDocument, new JsonSerializerOptions
-        {
-            Converters = { new BsonDocumentJsonConverter() }
-        });
-
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        var deleteResponse = await _client.PostAsync(deleteUrl, content);
+        var deleteResponse = await _client.DeleteAsync(deleteUrl);
 
         try
         {
