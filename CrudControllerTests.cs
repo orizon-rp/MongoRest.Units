@@ -204,6 +204,35 @@ public class CrudControllerTests
     }
     
     [Test, Order(6)]
+    public async Task CountAllDocuments_ReturnsDocument()
+    {
+        const string url = $"{CollectionUrl}/count";
+
+        try
+        {
+            var bsonDocument = new BsonDocument
+            {
+                { "Name", "Marry" }
+            };
+            
+            var json = JsonSerializer.Serialize(bsonDocument, _options);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await _client.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+
+            StatusCode_Ok(response.StatusCode);
+            
+            var responseString = await response.Content.ReadAsStringAsync();
+            Assert.That(responseString, Does.Contain("1"));
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
+    }
+    
+    [Test, Order(7)]
     public async Task DeleteAllDocumentByFilter_ReturnsDocument()
     {
         const string url = $"{CollectionUrl}/delete";
