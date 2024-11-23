@@ -41,6 +41,26 @@ public class CrudControllerTests
         Assert.That(statusCodes, Is.EqualTo(HttpStatusCode.OK));
     }
 
+    private async Task CreateDocument(HttpClient client, BsonDocument bsonDocument)
+    {
+        const string url = $"{CollectionUrl}/create";
+
+        var json = JsonSerializer.Serialize(bsonDocument, _options);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var response = await client.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+
+            StatusCode_Ok(response.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
+    }
+
     [Test, Order(0)]
     public async Task DeleteDocumentById_ReturnsSuccess()
     {
@@ -63,9 +83,7 @@ public class CrudControllerTests
     [Test, Order(1)]
     public async Task CreateDocument_ReturnsSuccess()
     {
-        const string url = $"{CollectionUrl}/create";
-
-        var bsonDocument = new BsonDocument
+        var bsonDocument1 = new BsonDocument
         {
             { "_id", DocumentId },
             { "Name", "Alice" },
@@ -73,21 +91,27 @@ public class CrudControllerTests
             { "Country", "Wonderland" }
         };
 
-        var json = JsonSerializer.Serialize(bsonDocument, _options);
-
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        try
+        await CreateDocument(_client, bsonDocument1);
+        
+        var bsonDocument2 = new BsonDocument
         {
-            var response = await _client.PostAsync(url, content);
-            response.EnsureSuccessStatusCode();
+            { "_id", "6741b5d0f12b1561701b9689" },
+            { "Name", "John" },
+            { "Age", 32 },
+            { "Country", "Wonderland" }
+        };
 
-            StatusCode_Ok(response.StatusCode);
-        }
-        catch (HttpRequestException ex)
+        await CreateDocument(_client,bsonDocument2);
+        
+        var bsonDocument3 = new BsonDocument
         {
-            Assert.Fail(ex.Message);
-        }
+            { "_id", "6741b5d0f12b1561701b968a" },
+            { "Name", "Marry" },
+            { "Age", 14 },
+            { "Country", "Wonderland" }
+        };
+
+        await CreateDocument(_client,bsonDocument3);
     }
 
     [Test, Order(2)]
@@ -116,15 +140,56 @@ public class CrudControllerTests
     [Test, Order(3)]
     public async Task DeleteDocumentByFilter_ReturnsDocument()
     {
+        const string url = $"{CollectionUrl}/delete/{DocumentId}";
+
+        try
+        {
+            var response = await _client.DeleteAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            StatusCode_Ok(response.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
+    }
+
+    [Test, Order(4)]
+    public async Task DeleteAllByFilterDocumentByFilter_ReturnsDocument()
+    {
         const string url = $"{CollectionUrl}/delete";
 
         try
         {
             var bsonDocument = new BsonDocument
             {
-                { "Name", "Alice" },
+                { "Name", "John" },
                 { "Country", "Wonderland" }
             };
+
+            var json = JsonSerializer.Serialize(bsonDocument, _options);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync(url, content);
+            response.EnsureSuccessStatusCode();
+
+            StatusCode_Ok(response.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            Assert.Fail(ex.Message);
+        }
+    }
+
+    [Test, Order(5)]
+    public async Task DeleteAllDocumentByFilter_ReturnsDocument()
+    {
+        const string url = $"{CollectionUrl}/delete";
+
+        try
+        {
+            var bsonDocument = new BsonDocument();
 
             var json = JsonSerializer.Serialize(bsonDocument, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
